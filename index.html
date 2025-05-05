@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hidden Bias Detector!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- Base Styles & CSS Variables --- */
+        :root {
+            /* Default Theme (Insightful Indigo/Lime) */
+            --bg-color: #EBF4FF; /* blue-50 */
+            --main-container-bg: #ffffff;
+            --main-container-border: #5A67D8; /* indigo-600 */
+            --main-container-shadow: #5A67D8;
+            --card-bg: #F0FFF4; /* green-50 */
+            --card-border: #9AE6B4; /* green-300 */
+            --card-shadow: #68D391; /* green-400 */
+            --term-text-color: #2D3748; /* gray-800 */
+            --action-button-text: white;
+            --action-button-border: #4C51BF; /* indigo-700 */
+            --action-button-shadow: #4C51BF;
+            --action-button-hover-shadow: #434190; /* indigo-800 */
+            --action-button-active-shadow: #4C51BF;
+            --classify-button-1-bg: #63B3ED; /* blue-400 */
+            --classify-button-1-hover: #4299E1; /* blue-500 */
+            --classify-button-1-active: #3182CE; /* blue-600 */
+            --classify-button-2-bg: #F6AD55; /* orange-400 */
+            --classify-button-2-hover: #ED8936; /* orange-500 */
+            --classify-button-2-active: #DD6B20; /* orange-600 */
+            --start-button-bg: #A3E635; /* lime-400 */
+            --start-button-hover-bg: #84CC16; /* lime-500 */
+            --start-button-active-bg: #65A30D; /* lime-600 */
+            --reset-button-bg: #F56565; /* red-500 */
+            --reset-button-hover-bg: #E53E3E; /* red-600 */
+            --reset-button-active-bg: #C53030; /* red-700 */
+            --result-area-bg: #F0FFF4; /* green-50 */
+            --result-area-border: #9AE6B4; /* green-300 */
+            --result-area-shadow: #68D391; /* green-400 */
+            --result-text-color: #22543D; /* green-900 */
+            --bias-text-color: #1A202C; /* gray-900 */
+            --thinking-text-color: #276749; /* green-800 */
+            --heading-color: #4C51BF; /* indigo-700 */
+            --subheading-color: #5A67D8; /* indigo-600 */
+            --label-color: #4C51BF;
+            --footer-text-color: #718096; /* gray-600 */
+            --focus-ring-color: var(--start-button-bg);
+            --theme-selector-bg: #F0FFF4;
+            --theme-selector-border: #9AE6B4;
+            --theme-selector-text: #22543D;
+        }
+
+        /* --- Theme Definitions --- */
+        body[data-theme="ocean-blue"] { --bg-color: #E0F2FE; --main-container-bg: #ffffff; --main-container-border: #075985; --main-container-shadow: #075985; --card-bg: #CFFAFE; --card-border: #67E8F9; --card-shadow: #22D3EE; --term-text-color: #083344; --action-button-border: #075985; --action-button-shadow: #075985; --action-button-hover-shadow: #075985; --action-button-active-shadow: #075985; --classify-button-1-bg: #38BDF8; --classify-button-1-hover: #0EA5E9; --classify-button-1-active: #0284C7; --classify-button-2-bg: #A5F3FC; --classify-button-2-hover: #67E8F9; --classify-button-2-active: #22D3EE; --start-button-bg: #2DD4BF; --start-button-hover-bg: #14B8A6; --start-button-active-bg: #0D9488; --reset-button-bg: #FB7185; --reset-button-hover-bg: #F43F5E; --reset-button-active-bg: #E11D48; --result-area-bg: #A5F3FC; --result-area-border: #67E8F9; --result-area-shadow: #22D3EE; --result-text-color: #164E63; --bias-text-color: #083344; --thinking-text-color: #155E75; --heading-color: #0C4A6E; --subheading-color: #155E75; --label-color: #155E75; --footer-text-color: #0369A1; --focus-ring-color: var(--start-button-bg); --theme-selector-bg: #A5F3FC; --theme-selector-border: #67E8F9; --theme-selector-text: #155E75; }
+        body[data-theme="forest-green"] { --bg-color: #F0FFF4; --main-container-bg: #ffffff; --main-container-border: #2F855A; --main-container-shadow: #2F855A; --card-bg: #FEFCBF; --card-border: #F6E05E; --card-shadow: #ECC94B; --term-text-color: #744210; --action-button-border: #276749; --action-button-shadow: #276749; --action-button-hover-shadow: #22543D; --action-button-active-shadow: #276749; --classify-button-1-bg: #C6F6D5; --classify-button-1-hover: #9AE6B4; --classify-button-1-active: #68D391; --classify-button-2-bg: #A3E635; --classify-button-2-hover: #84CC16; --classify-button-2-active: #65A30D; --start-button-bg: #48BB78; --start-button-hover-bg: #38A169; --start-button-active-bg: #2F855A; --reset-button-bg: #F56565; --reset-button-hover-bg: #E53E3E; --reset-button-active-bg: #C53030; --result-area-bg: #A7F3D0; --result-area-border: #6EE7B7; --result-area-shadow: #34D399; --result-text-color: #047857; --bias-text-color: #064E3B; --thinking-text-color: #065F46; --heading-color: #2F855A; --subheading-color: #276749; --label-color: #276749; --footer-text-color: #718096; --focus-ring-color: var(--start-button-bg); --theme-selector-bg: #FEFCBF; --theme-selector-border: #F6E05E; --theme-selector-text: #B7791F; }
+        body[data-theme="cosmic-purple"] { --bg-color: #FAF5FF; --main-container-bg: #1E1B4B; --main-container-border: #A78BFA; --main-container-shadow: #A78BFA; --card-bg: #3730A3; --card-border: #C4B5FD; --card-shadow: #A78BFA; --term-text-color: #EDE9FE; --action-button-text: #1E1B4B; --action-button-border: #A78BFA; --action-button-shadow: #A78BFA; --action-button-hover-shadow: #A78BFA; --action-button-active-shadow: #A78BFA; --classify-button-1-bg: #A78BFA; --classify-button-1-hover: #8B5CF6; --classify-button-1-active: #7C3AED; --classify-button-2-bg: #F472B6; --classify-button-2-hover: #EC4899; --classify-button-2-active: #DB2777; --start-button-bg: #8B5CF6; --start-button-hover-bg: #7C3AED; --start-button-active-bg: #6D28D9; --reset-button-bg: #F87171; --reset-button-hover-bg: #EF4444; --reset-button-active-bg: #DC2626; --result-area-bg: #4338CA; --result-area-border: #A78BFA; --result-area-shadow: #A78BFA; --result-text-color: #C4B5FD; --bias-text-color: #EDE9FE; --thinking-text-color: #A78BFA; --heading-color: #EDE9FE; --subheading-color: #C4B5FD; --label-color: #C4B5FD; --footer-text-color: #A78BFA; --focus-ring-color: var(--start-button-bg); --theme-selector-bg: #4338CA; --theme-selector-border: #A78BFA; --theme-selector-text: #EEF2FF; }
+        body[data-theme="sunny-yellow"] { --bg-color: #FEF9C3; --main-container-bg: #ffffff; --main-container-border: #CA8A04; --main-container-shadow: #CA8A04; --card-bg: #FEF08A; --card-border: #FACC15; --card-shadow: #EAB308; --term-text-color: #78350F; --action-button-border: #CA8A04; --action-button-shadow: #CA8A04; --action-button-hover-shadow: #CA8A04; --action-button-active-shadow: #CA8A04; --classify-button-1-bg: #FDE047; --classify-button-1-hover: #FACC15; --classify-button-1-active: #EAB308; --classify-button-2-bg: #FDBA74; --classify-button-2-hover: #FB923C; --classify-button-2-active: #F97316; --start-button-bg: #FB923C; --start-button-hover-bg: #F97316; --start-button-active-bg: #EA580C; --reset-button-bg: #F87171; --reset-button-hover-bg: #EF4444; --reset-button-active-bg: #DC2626; --result-area-bg: #FEF3C7; --result-area-border: #FDE047; --result-area-shadow: #EAB308; --result-text-color: #854D0E; --bias-text-color: #713F12; --thinking-text-color: #A16207; --heading-color: #B45309; --subheading-color: #A16207; --label-color: #A16207; --footer-text-color: #B45309; --focus-ring-color: var(--start-button-bg); --theme-selector-bg: #FEF3C7; --theme-selector-border: #FDE047; --theme-selector-text: #854D0E; }
+        body[data-theme="candy-pink"] { --bg-color: #FDF2F8; --main-container-bg: #ffffff; --main-container-border: #9D174D; --main-container-shadow: #9D174D; --card-bg: #FCE7F3; --card-border: #F9A8D4; --card-shadow: #F472B6; --term-text-color: #831843; --action-button-border: #9D174D; --action-button-shadow: #9D174D; --action-button-hover-shadow: #9D174D; --action-button-active-shadow: #9D174D; --classify-button-1-bg: #FBCFE8; --classify-button-1-hover: #F9A8D4; --classify-button-1-active: #F472B6; --classify-button-2-bg: #F0ABFC; --classify-button-2-hover: #E879F9; --classify-button-2-active: #D946EF; --start-button-bg: #A78BFA; --start-button-hover-bg: #8B5CF6; --start-button-active-bg: #7C3AED; --reset-button-bg: #FB7185; --reset-button-hover-bg: #F43F5E; --reset-button-active-bg: #E11D48; --result-area-bg: #FBCFE8; --result-area-border: #F9A8D4; --result-area-shadow: #F472B6; --result-text-color: #9D174D; --bias-text-color: #831843; --thinking-text-color: #BE185D; --heading-color: #831843; --subheading-color: #BE185D; --label-color: #BE185D; --footer-text-color: #9D174D; --focus-ring-color: var(--start-button-bg); --theme-selector-bg: #FBCFE8; --theme-selector-border: #F9A8D4; --theme-selector-text: #9D174D; }
+        body[data-theme="night-mode"] { --bg-color: #111827; --main-container-bg: #1F2937; --main-container-border: #6B7280; --main-container-shadow: #9CA3AF; --card-bg: #374151; --card-border: #9CA3AF; --card-shadow: #D1D5DB; --term-text-color: #F3F4F6; --action-button-text: #111827; --action-button-border: #9CA3AF; --action-button-shadow: #9CA3AF; --action-button-hover-shadow: #D1D5DB; --action-button-active-shadow: #6B7280; --classify-button-1-bg: #6B7280; --classify-button-1-hover: #52525B; --classify-button-1-active: #475569; --classify-button-2-bg: #A1A1AA; --classify-button-2-hover: #71717A; --classify-button-2-active: #52525B; --start-button-bg: #60A5FA; --start-button-hover-bg: #3B82F6; --start-button-active-bg: #2563EB; --reset-button-bg: #F87171; --reset-button-hover-bg: #EF4444; --reset-button-active-bg: #DC2626; --result-area-bg: #4B5563; --result-area-border: #9CA3AF; --result-area-shadow: #D1D5DB; --result-text-color: #ECFDF5; --bias-text-color: #f0fdf4; --thinking-text-color: #D1D5DB; --heading-color: #F9FAFB; --subheading-color: #E5E7EB; --label-color: #E5E7EB; --footer-text-color: #9CA3AF; --focus-ring-color: var(--start-button-bg); --theme-selector-bg: #4B5563; --theme-selector-border: #9CA3AF; --theme-selector-text: #F9FAFB; }
+
+        /* --- General Styles --- */
+        html, body { height: 100%; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding-top: 5rem; /* Space for theme selector */
+            position: relative;
+            transition: background-color 0.3s ease;
+            overflow-x: hidden;
+        }
+        main { flex-grow: 1; display: flex; flex-direction: column; align-items: center; }
+
+        .main-container {
+            background-color: var(--main-container-bg);
+            border: 3px solid var(--main-container-border);
+            border-radius: 20px;
+            box-shadow: 8px 8px 0px var(--main-container-shadow);
+            width: 100%;
+            max-width: 42rem; /* Moderate width */
+            margin: 2rem auto 1rem auto; /* Default margin */
+            padding: 1.5rem sm:p-8;
+            text-align: center;
+            flex-shrink: 0;
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Term Display Card */
+        #termCard {
+            background-color: var(--card-bg);
+            border: 2px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: 4px 4px 0px var(--card-shadow);
+            padding: 2rem 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+            min-height: 150px; /* Ensure space */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        #termText {
+            font-size: 2rem; /* Large term text */
+            font-weight: 600;
+            color: var(--term-text-color);
+            transition: color 0.3s ease;
+        }
+
+        /* Classification Button Area */
+        #classifyButtons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem; /* Space between buttons */
+            margin-top: 1rem;
+        }
+        .classify-button {
+            color: var(--action-button-text);
+            font-weight: 700;
+            padding: 1rem 2rem; /* Large buttons */
+            border-radius: 1rem;
+            border: 3px solid var(--action-button-border);
+            box-shadow: 5px 5px 0px var(--action-button-shadow);
+            transition: all 0.15s ease-out;
+            cursor: pointer;
+            font-size: 1.5rem; /* Large emoji/text */
+            min-width: 100px;
+            transform-style: preserve-3d;
+        }
+        .classify-button:hover:not(:disabled) {
+            box-shadow: 6px 6px 0px var(--action-button-hover-shadow);
+            transform: translateY(-3px) translateX(-2px) translateZ(5px);
+        }
+        .classify-button:active:not(:disabled) {
+            box-shadow: 2px 2px 0px var(--action-button-active-shadow);
+            transform: translateY(2px) translateX(2px) translateZ(0px);
+        }
+        .classify-button:focus {
+             outline: none;
+             box-shadow: 5px 5px 0px var(--action-button-shadow), 0 0 0 3px var(--bg-color), 0 0 0 5px var(--focus-ring-color);
+         }
+        .classify-button:disabled {
+            opacity: 0.6; cursor: not-allowed; box-shadow: 5px 5px 0px var(--action-button-shadow); transform: none;
+        }
+        #classifyBtn1 { background-color: var(--classify-button-1-bg); --focus-ring-color: var(--classify-button-1-bg); }
+        #classifyBtn1:hover:not(:disabled) { background-color: var(--classify-button-1-hover); }
+        #classifyBtn1:active:not(:disabled) { background-color: var(--classify-button-1-active); }
+        #classifyBtn2 { background-color: var(--classify-button-2-bg); --focus-ring-color: var(--classify-button-2-bg); }
+        #classifyBtn2:hover:not(:disabled) { background-color: var(--classify-button-2-hover); }
+        #classifyBtn2:active:not(:disabled) { background-color: var(--classify-button-2-active); }
+
+
+        /* Action Button Styles (Start/Reset) */
+        .action-button {
+            color: var(--action-button-text); font-weight: 700; padding: 0.8rem 1.8rem; border-radius: 1rem; border: 3px solid var(--action-button-border); box-shadow: 5px 5px 0px var(--action-button-shadow); transition: all 0.15s ease-out; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-size: 1rem; min-width: 120px; transform-style: preserve-3d;
+        }
+        .action-button:hover:not(:disabled) { box-shadow: 6px 6px 0px var(--action-button-hover-shadow); transform: translateY(-3px) translateX(-2px) translateZ(5px); }
+        .action-button:active:not(:disabled) { box-shadow: 2px 2px 0px var(--action-button-active-shadow); transform: translateY(2px) translateX(2px) translateZ(0px); }
+        .action-button:focus { outline: none; box-shadow: 5px 5px 0px var(--action-button-shadow), 0 0 0 3px var(--bg-color), 0 0 0 5px var(--focus-ring-color); }
+        .action-button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: 5px 5px 0px var(--action-button-shadow); transform: none; }
+
+        #startBtn { background-color: var(--start-button-bg); border-color: var(--action-button-border); box-shadow: 5px 5px 0px var(--action-button-shadow); --focus-ring-color: var(--start-button-bg); }
+        #startBtn:hover:not(:disabled) { background-color: var(--start-button-hover-bg); box-shadow: 6px 6px 0px var(--action-button-hover-shadow); }
+        #startBtn:active:not(:disabled) { background-color: var(--start-button-active-bg); box-shadow: 2px 2px 0px var(--action-button-active-shadow); }
+
+        #resetBtn { background-color: var(--reset-button-bg); border-color: var(--action-button-border); box-shadow: 5px 5px 0px var(--action-button-shadow); --focus-ring-color: var(--reset-button-bg); }
+        #resetBtn:hover { background-color: var(--reset-button-hover-bg); box-shadow: 6px 6px 0px var(--action-button-hover-shadow); }
+        #resetBtn:active { background-color: var(--reset-button-active-bg); box-shadow: 2px 2px 0px var(--action-button-active-shadow); }
+
+
+        /* Result Area Styles */
+        #resultArea {
+            background-color: var(--result-area-bg); border: 2px dashed var(--result-area-border); border-radius: 16px; box-shadow: 4px 4px 0px var(--result-area-shadow); padding: 1.5rem; margin-top: 2rem; min-height: 150px; text-align: center; transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; opacity: 0; transform: scale(0.9) rotate(-2deg); display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        #resultArea.visible { opacity: 1; transform: scale(1) rotate(0deg); animation: reveal 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards; }
+        #resultText { font-size: 1.1rem; font-weight: 600; color: var(--result-text-color); margin-bottom: 1rem; transition: color 0.3s ease; line-height: 1.5; max-width: 90%;}
+        #biasText { font-size: 1.3rem; font-weight: 700; margin-top: 0.5rem; color: var(--bias-text-color); background-color: rgba(0, 0, 0, 0.05); padding: 0.75rem 1rem; border-radius: 8px; }
+        #thinkingText { font-style: italic; color: var(--thinking-text-color); transition: color 0.3s ease; font-size: 1.1rem; margin-bottom: 1rem; }
+
+        /* Headings & Labels */
+        .main-heading { color: var(--heading-color); transition: color 0.3s ease; padding-top: 1rem; /* Default padding */ }
+        .sub-heading { color: var(--subheading-color); transition: color 0.3s ease; font-size: 1.1rem; line-height: 1.6; margin-bottom: 1.5rem; }
+         #instructionText { color: var(--text-color); font-weight: 500; margin-bottom: 1rem; min-height: 2.5em; /* Prevent layout shift */ }
+
+        /* Footer Styling */
+        .page-footer { text-align: center; padding: 1rem 0; margin-top: 1rem; font-size: 0.8rem; color: var(--footer-text-color); flex-shrink: 0; line-height: 1.5; transition: color 0.3s ease; }
+        .page-footer p { margin-bottom: 0.25rem; }
+
+        /* Theme Selector Styles */
+        .theme-selector-container { position: absolute; top: 1rem; right: 1rem; z-index: 10; }
+        .theme-selector-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
+        #themeSelector { padding: 0.4rem 0.8rem; border-radius: 8px; border: 2px solid var(--theme-selector-border); background-color: var(--theme-selector-bg); color: var(--theme-selector-text); font-weight: 500; cursor: pointer; box-shadow: 2px 2px 0px var(--theme-selector-border); transition: all 0.2s ease; vertical-align: middle; font-size: 0.8rem; }
+        #themeSelector:focus { outline: none; box-shadow: 2px 2px 0px var(--theme-selector-border), 0 0 0 3px var(--main-container-bg), 0 0 0 5px var(--theme-selector-border); }
+
+        /* Dark Theme Adjustments */
+        body[data-theme="cosmic-purple"] .main-heading svg,
+        body[data-theme="night-mode"] .main-heading svg { color: #F687B3; /* pink-400 */ }
+        body[data-theme="cosmic-purple"] .sub-heading,
+        body[data-theme="night-mode"] .sub-heading { color: #D1D5DB; }
+        body[data-theme="cosmic-purple"] #themeSelector:focus,
+        body[data-theme="night-mode"] #themeSelector:focus { box-shadow: 2px 2px 0px var(--theme-selector-border), 0 0 0 3px var(--main-container-bg), 0 0 0 5px var(--theme-selector-border); }
+        body[data-theme="night-mode"] #biasText { background-color: rgba(255,255,255,0.1); }
+
+
+        /* Hide class utility */
+        .hidden { display: none; }
+
+        /* Animation for result reveal */
+        @keyframes reveal { from { transform: scale(0.8) rotate(-5deg); opacity: 0; } to { transform: scale(1) rotate(0deg); opacity: 1; } }
+
+    </style>
+</head>
+<body class="p-4 md:p-6">
+
+    <div class="theme-selector-container">
+        <label for="themeSelector" class="theme-selector-label">Choose a Theme:</label>
+        <select id="themeSelector">
+            <option value="default">🎨 Default</option>
+            <option value="ocean-blue">🌊 Ocean Blue</option>
+            <option value="forest-green">🌲 Forest Green</option>
+            <option value="cosmic-purple">✨ Cosmic Purple</option>
+            <option value="sunny-yellow">☀️ Sunny Yellow</option>
+            <option value="candy-pink">🍬 Candy Pink</option>
+            <option value="night-mode">🌙 Night Mode</option>
+        </select>
+    </div>
+
+    <main>
+        <div class="main-container">
+            <h1 class="main-heading text-3xl sm:text-4xl font-bold text-center mb-4 tracking-tight flex items-center justify-center gap-3">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-9 h-9 text-indigo-600">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                 </svg>
+                 Hidden Bias Detector <span class="text-2xl">🧐</span>
+            </h1>
+
+            <p id="instructionText" class="sub-heading text-center mb-6">Quickly classify the terms below by clicking the 🔵 or 🔶 button based on your first instinct. Try not to overthink!</p>
+
+            <div id="gameArea" class="hidden">
+                <div id="termCard">
+                    <p id="termText">[TERM]</p>
+                </div>
+                <div id="classifyButtons">
+                    <button id="classifyBtn1" data-value="0" class="classify-button">🔵</button>
+                    <button id="classifyBtn2" data-value="1" class="classify-button">🔶</button>
+                </div>
+                <div id="progressIndicator" class="mt-4 text-sm font-medium text-gray-500">Term 1 of X</div>
+            </div>
+
+             <div id="startArea" class="text-center mt-6">
+                 <button id="startBtn" class="action-button start-button">🚀 Start Classifying!</button>
+            </div>
+
+
+            <div id="resultArea" class="hidden">
+                <p id="thinkingText">🧠 Analyzing patterns...</p>
+                <p id="resultText"></p>
+                <p id="biasText" class="hidden"></p>
+                <button id="resetBtn" class="action-button reset-button mt-6">Play Again? 🔁</button>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="page-footer">
+        <p>© 2025 ToolForge. All rights reserved.</p>
+        <p>Built with ❤️ by Anas.</p>
+    </footer>
+
+    <script>
+        // --- DOM Elements ---
+        const gameArea = document.getElementById('gameArea');
+        const termCard = document.getElementById('termCard');
+        const termText = document.getElementById('termText');
+        const classifyButtonsContainer = document.getElementById('classifyButtons');
+        const classifyBtn1 = document.getElementById('classifyBtn1');
+        const classifyBtn2 = document.getElementById('classifyBtn2');
+        const progressIndicator = document.getElementById('progressIndicator');
+        const startArea = document.getElementById('startArea');
+        const startBtn = document.getElementById('startBtn');
+        const resultArea = document.getElementById('resultArea');
+        const thinkingText = document.getElementById('thinkingText');
+        const resultText = document.getElementById('resultText');
+        const biasText = document.getElementById('biasText');
+        const resetBtn = document.getElementById('resetBtn');
+        const themeSelector = document.getElementById('themeSelector');
+
+        // --- Game State & Config ---
+        let gameState = 'INITIAL'; // INITIAL, CLASSIFYING, FINISHED
+        let currentTermIndex = 0;
+        let startTime = 0; // To measure reaction time
+        let classificationData = []; // Stores { term: '...', bias: '...', classification: 0/1, time: ms }
+        let shuffledPool = [];
+        const TERMS_PER_ROUND = 15; // Number of terms to classify
+
+        // --- Term Pool (Positive vs. Negative Concepts) ---
+        const wordPool = [
+            { term: "Sunshine ☀️", bias: "positive" }, { term: "Puppy 🐶", bias: "positive" },
+            { term: "Laughter 😂", bias: "positive" }, { term: "Kindness ❤️", bias: "positive" },
+            { term: "Vacation 🏖️", bias: "positive" }, { term: "Rainbow 🌈", bias: "positive" },
+            { term: "Hugs 🤗", bias: "positive" }, { term: "Music 🎵", bias: "positive" },
+            { term: "Flowers 🌸", bias: "positive" }, { term: "Cake 🎂", bias: "positive" },
+            { term: "Friendship 🤝", bias: "positive" }, { term: "Success 🎉", bias: "positive" },
+            { term: "Peace 🕊️", bias: "positive" }, { term: "Joy 😊", bias: "positive" },
+            { term: "Adventure 🚀", bias: "positive" },
+
+            { term: "Storm ⛈️", bias: "negative" }, { term: "Spider 🕷️", bias: "negative" },
+            { term: "Argument 😠", bias: "negative" }, { term: "Failure 👎", bias: "negative" },
+            { term: "Traffic Jam 🚗", bias: "negative" }, { term: "Mud 💩", bias: "negative" },
+            { term: "Homework 📚", bias: "negative" }, { term: "Loud Noise 🔊", bias: "negative" },
+            { term: "Germs 🦠", bias: "negative" }, { term: "Broken Toy 💔", bias: "negative" },
+            { term: "Sadness 😢", bias: "negative" }, { term: "Fear 😨", bias: "negative" },
+            { term: "Pollution 🏭", bias: "negative" }, { term: "Waiting ⏳", bias: "negative" },
+            { term: "Mosquito 🦟", bias: "negative" },
+
+             // Add more pairs as needed
+            { term: "Gift 🎁", bias: "positive" }, { term: "Bill 🧾", bias: "negative" },
+            { term: "Compliment 👍", bias: "positive" }, { term: "Criticism 👎", bias: "negative" },
+            { term: "Warmth 🔥", bias: "positive" }, { term: "Cold 🥶", bias: "negative" },
+            { term: "Beach 🏖️", bias: "positive" }, { term: "Swamp 🐊", bias: "negative" },
+            { term: "Kitten 🐈", bias: "positive" }, { term: "Wasp 🐝", bias: "negative" },
+        ];
+
+        // --- Result Phrasing Variations ---
+        const resultPhrases = {
+            balanced: [
+                "Your classifications seemed balanced, showing no strong implicit associations in this quick test! 👍",
+                "Impressive neutrality! Your responses didn't show a strong leaning towards associating either button with positive or negative terms. ✨",
+                "Well done! Your classifications were quite even, suggesting balanced associations in this task. 😊"
+            ],
+            pos_faster: [
+                "Interesting! You classified positive terms slightly faster with the {button} button.",
+                "A subtle pattern emerged: positive words were sorted a bit quicker using the {button} button.",
+                "There was a slight speed advantage for positive terms when you used the {button} button."
+            ],
+            neg_faster: [
+                "Hmm, a small trend: negative terms were classified a touch faster with the {button} button.",
+                "The data suggests a slight speed difference – negative words were quicker with the {button} button.",
+                "A minor pattern: you reacted a bit faster to negative terms using the {button} button."
+            ],
+            pos_assoc: [
+                "You seemed to associate positive terms more strongly with the {button} button.",
+                "The {button} button appeared to be your go-to for positive concepts.",
+                "Positive ideas were predominantly linked with the {button} button in your classifications."
+            ],
+            neg_assoc: [
+                "Negative terms were mostly classified using the {button} button.",
+                "There was a tendency to link negative concepts with the {button} button.",
+                "The {button} button seemed to be more frequently associated with negative terms."
+            ],
+            both_assoc: [
+                "It seems you associated positive terms more with the {pos_button} button, and negative terms more with the {neg_button} button.",
+                "A pattern of association emerged: positive concepts tended towards {pos_button}, while negative ones leaned towards {neg_button}.",
+                "Your classifications suggest a link between positive ideas and {pos_button}, and negative ideas with {neg_button}."
+            ],
+            reminder: "<br><br><span class='text-sm italic'>Remember, this is a simplified game, not a definitive psychological assessment! It just looks for subtle patterns in this specific task.</span>"
+        };
+
+        // --- Functions ---
+
+        /** Shuffles array in place. Fisher-Yates algorithm. */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+         /** Gets a random element from an array */
+        function getRandomElement(arr) {
+            if (!arr || arr.length === 0) return "";
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+
+        /** Starts the game */
+        function startGame() {
+            gameState = 'CLASSIFYING';
+            currentTermIndex = 0;
+            classificationData = [];
+            shuffledPool = [...wordPool]; // Copy and shuffle
+            shuffleArray(shuffledPool);
+            shuffledPool = shuffledPool.slice(0, TERMS_PER_ROUND); // Take subset
+
+            startArea.classList.add('hidden');
+            resultArea.classList.add('hidden');
+            resultArea.classList.remove('visible');
+            gameArea.classList.remove('hidden');
+            progressIndicator.classList.remove('hidden');
+            classifyBtn1.disabled = false;
+            classifyBtn2.disabled = false;
+
+            displayNextTerm();
+        }
+
+        /** Displays the next term */
+        function displayNextTerm() {
+            if (currentTermIndex >= shuffledPool.length) {
+                finishGame();
+                return;
+            }
+
+            const currentWord = shuffledPool[currentTermIndex];
+            termText.textContent = currentWord.term;
+            progressIndicator.textContent = `Term ${currentTermIndex + 1} of ${TERMS_PER_ROUND}`;
+            termCard.style.transform = 'scale(1)'; // Reset animation if any
+
+            // Record start time for reaction measurement
+            startTime = performance.now();
+        }
+
+        /** Handles classification button click */
+        function handleClassification(classificationValue) {
+            if (gameState !== 'CLASSIFYING') return;
+
+            const endTime = performance.now();
+            const reactionTime = endTime - startTime;
+            const currentWord = shuffledPool[currentTermIndex];
+
+            classificationData.push({
+                term: currentWord.term,
+                bias: currentWord.bias,
+                classification: classificationValue, // 0 for button 1, 1 for button 2
+                time: reactionTime
+            });
+
+            // Visual feedback (optional subtle animation)
+            termCard.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                 currentTermIndex++;
+                 displayNextTerm();
+            }, 100); // Short delay before next term
+        }
+
+        /** Analyzes results and displays feedback */
+        function finishGame() {
+            gameState = 'FINISHED';
+            gameArea.classList.add('hidden');
+            progressIndicator.classList.add('hidden');
+            resultArea.classList.remove('hidden');
+            biasText.classList.add('hidden');
+            thinkingText.style.display = 'block';
+            thinkingText.textContent = '🧠 Analyzing patterns...';
+            resultArea.classList.remove('visible');
+
+            // Disable classification buttons while showing results
+            classifyBtn1.disabled = true;
+            classifyBtn2.disabled = true;
+
+            setTimeout(() => {
+                thinkingText.textContent = '🧐 Checking associations...';
+            }, 1000);
+
+            setTimeout(() => {
+                const analysisResult = analyzeBias(classificationData); // Get the analysis string
+
+                thinkingText.style.display = 'none';
+                resultText.textContent = "Analysis Complete!";
+                biasText.innerHTML = analysisResult; // Use the generated string
+                biasText.classList.remove('hidden');
+                resultArea.classList.add('visible');
+                resetBtn.classList.remove('hidden');
+            }, 2500);
+        }
+
+        /** Analyzes data for biases (Heuristic) and returns varied phrasing */
+        function analyzeBias(data) {
+            let positiveTimes = { 0: [], 1: [] };
+            let negativeTimes = { 0: [], 1: [] };
+            let positiveCounts = { 0: 0, 1: 0 };
+            let negativeCounts = { 0: 0, 1: 0 };
+
+            data.forEach(item => {
+                if (item.bias === 'positive') {
+                    positiveTimes[item.classification].push(item.time);
+                    positiveCounts[item.classification]++;
+                } else if (item.bias === 'negative') {
+                    negativeTimes[item.classification].push(item.time);
+                    negativeCounts[item.classification]++;
+                }
+            });
+
+            const avgTime = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+            let avgPositive0 = avgTime(positiveTimes[0]);
+            let avgPositive1 = avgTime(positiveTimes[1]);
+            let avgNegative0 = avgTime(negativeTimes[0]);
+            let avgNegative1 = avgTime(negativeTimes[1]);
+
+            let findings = [];
+            const buttonEmoji = ['🔵', '🔶'];
+            const timeDiffThreshold = 150; // ms difference to consider significant
+            const countRatioThreshold = 1.5; // How much more frequent one button is used
+
+            // Compare reaction times for POSITIVE words
+            if (avgPositive0 > 0 && avgPositive1 > 0 && Math.abs(avgPositive0 - avgPositive1) > timeDiffThreshold) {
+                const fasterButton = avgPositive0 < avgPositive1 ? buttonEmoji[0] : buttonEmoji[1];
+                findings.push(getRandomElement(resultPhrases.pos_faster).replace('{button}', fasterButton));
+            }
+            // Compare reaction times for NEGATIVE words
+             if (avgNegative0 > 0 && avgNegative1 > 0 && Math.abs(avgNegative0 - avgNegative1) > timeDiffThreshold) {
+                const fasterButton = avgNegative0 < avgNegative1 ? buttonEmoji[0] : buttonEmoji[1];
+                 findings.push(getRandomElement(resultPhrases.neg_faster).replace('{button}', fasterButton));
+            }
+
+            // Compare frequencies
+            let positiveButton = -1;
+            let negativeButton = -1;
+            if (positiveCounts[0] > positiveCounts[1] * countRatioThreshold) positiveButton = 0;
+            else if (positiveCounts[1] > positiveCounts[0] * countRatioThreshold) positiveButton = 1;
+
+            if (negativeCounts[0] > negativeCounts[1] * countRatioThreshold) negativeButton = 0;
+            else if (negativeCounts[1] > negativeCounts[0] * countRatioThreshold) negativeButton = 1;
+
+            if (positiveButton !== -1 && negativeButton !== -1 && positiveButton !== negativeButton) {
+                 findings.push(getRandomElement(resultPhrases.both_assoc)
+                    .replace('{pos_button}', buttonEmoji[positiveButton])
+                    .replace('{neg_button}', buttonEmoji[negativeButton]));
+            } else if (positiveButton !== -1) {
+                 findings.push(getRandomElement(resultPhrases.pos_assoc).replace('{button}', buttonEmoji[positiveButton]));
+            } else if (negativeButton !== -1) {
+                 findings.push(getRandomElement(resultPhrases.neg_assoc).replace('{button}', buttonEmoji[negativeButton]));
+            }
+
+            // Construct final result string
+            if (findings.length === 0) {
+                return getRandomElement(resultPhrases.balanced) + resultPhrases.reminder;
+            } else {
+                // Join multiple findings with random connectors
+                const connectors = ["<br><br>Also, ", "<br><br>Additionally, ", "<br><br>Furthermore, "];
+                let resultString = findings[0];
+                for(let i = 1; i < findings.length; i++) {
+                    resultString += getRandomElement(connectors) + findings[i];
+                }
+                return resultString + resultPhrases.reminder;
+            }
+        }
+
+
+        /** Resets the game */
+        function resetGame() {
+            gameState = 'INITIAL';
+            currentTermIndex = 0;
+            classificationData = [];
+            shuffledPool = [];
+
+            startArea.classList.remove('hidden');
+            gameArea.classList.add('hidden');
+            resultArea.classList.add('hidden');
+            resultArea.classList.remove('visible');
+            biasText.classList.add('hidden');
+            resetBtn.classList.add('hidden');
+            classifyBtn1.disabled = true;
+            classifyBtn2.disabled = true;
+            instructionText.textContent = "Quickly classify the terms below by clicking the 🔵 or 🔶 button based on your first instinct. Try not to overthink!";
+        }
+
+        // --- Theme Switching Logic (With localStorage) ---
+        function applyTheme(themeName) {
+            document.body.dataset.theme = themeName;
+            try { localStorage.setItem('biasDetectorTheme', themeName); }
+            catch (e) { console.warn("Could not save theme preference:", e); }
+        }
+
+        function loadSavedTheme() {
+            let savedTheme = 'default';
+            try { savedTheme = localStorage.getItem('biasDetectorTheme') || 'default'; }
+            catch (e) { console.warn("Could not load theme preference:", e); }
+            themeSelector.value = savedTheme;
+            applyTheme(savedTheme);
+        }
+
+        themeSelector.addEventListener('change', (event) => applyTheme(event.target.value));
+
+        // --- Event Listeners ---
+        startBtn.addEventListener('click', startGame);
+        classifyBtn1.addEventListener('click', () => handleClassification(0));
+        classifyBtn2.addEventListener('click', () => handleClassification(1));
+        resetBtn.addEventListener('click', resetGame);
+
+        // --- Initial Load ---
+        loadSavedTheme();
+        resetGame(); // Initialize game state
+
+    </script>
+
+</body>
+</html>
